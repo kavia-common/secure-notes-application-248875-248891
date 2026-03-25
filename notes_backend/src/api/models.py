@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -48,9 +48,6 @@ Index("notes_archived_at_idx", Note.archived_at)
 
 class Tag(Base):
     __tablename__ = "tags"
-    __table_args__ = (
-        UniqueConstraint("user_id", func.lower("name"), name="tags_user_name_uidx"),
-    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
@@ -59,6 +56,11 @@ class Tag(Base):
 
     user: Mapped["User"] = relationship(back_populates="tags")
     note_tags: Mapped[List["NoteTag"]] = relationship(back_populates="tag", cascade="all, delete-orphan")
+
+
+# Functional (expression-based) unique constraint for case-insensitive tag names per user.
+# Using a unique index is the idiomatic way to enforce uniqueness over SQL expressions.
+Index("tags_user_lower_name_uidx", Tag.user_id, func.lower(Tag.name), unique=True)
 
 
 class NoteTag(Base):
