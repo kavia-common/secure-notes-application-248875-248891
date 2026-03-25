@@ -17,6 +17,7 @@ from collections.abc import AsyncIterator
 from typing import Any, Dict
 
 import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 
@@ -65,7 +66,7 @@ def app() -> Any:
     return fastapi_app
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def client(app: Any) -> AsyncIterator[AsyncClient]:
     """Create an AsyncClient wired to the FastAPI ASGI app."""
     transport = ASGITransport(app=app)
@@ -82,7 +83,7 @@ async def _signup_and_get_token(ac: AsyncClient, *, email: str, password: str) -
     return data["access_token"]
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def auth_headers(client: AsyncClient) -> Dict[str, str]:
     """Create a user and return Authorization headers."""
     token = await _signup_and_get_token(
